@@ -1,44 +1,63 @@
-# docsbot - metrics server
+# docsbot — сервер метрик
 
-This repository contains a minimal metrics and health HTTP server for the docsbot project.
-The server exposes Prometheus metrics and health endpoints only — no business logic.
+Это минимальный HTTP-сервис для проекта docsbot, который предоставляет только метрики Prometheus и health-проверки (liveness/readiness). Сервис не содержит бизнес-логики — только runtime-метрики и простые эндпойнты для мониторинга.
 
-Usage
+Функции
 
-Build locally:
+- GET /healthz — возвращает 200 OK и JSON {"status":"ok"}
+- GET /readyz — возвращает 200 OK (готовность)
+- GET /metrics — Prometheus endpoint с метриками
+
+Запуск локально
+
+Сборка бинаря и запуск:
 
     make build
-
-Run locally:
-
     make run
 
-The server listens on port 9090 by default. You can override the port via METRICS_PORT environment variable.
+По умолчанию сервер слушает порт 9090. Можно переопределить порт через переменную окружения METRICS_PORT:
 
-Endpoints
+    METRICS_PORT=8080 ./bin/docsbot
 
-- GET /healthz - returns 200 OK with {"status":"ok"}
-- GET /readyz - same as /healthz (readiness)
-- GET /metrics - Prometheus metrics endpoint
+Тестирование
 
-Docker
-
-Build image (host architecture):
-
-    make docker-build
-
-Build multi-arch image (requires docker buildx and a registry):
-
-    make docker-buildx PLATFORMS=linux/amd64,linux/arm64 TAG=yourrepo/docsbot:tag
-
-Testing
-
-Run unit tests:
+Запуск unit-тестов:
 
     make test
 
-Notes
+Docker
 
-- The project uses github.com/prometheus/client_golang for metrics.
-- Dockerfile is multi-stage; final image is based on distroless static nonroot.
-- If you need a debuggable image, change the final image to alpine in the Dockerfile.
+Сборка образа для архитектуры хоста:
+
+    make docker-build
+
+Запуск контейнера локально:
+
+    make docker-run
+
+Сборка multi-arch образа (требует docker buildx и настроенного реестра):
+
+    make docker-buildx PLATFORMS=linux/amd64,linux/arm64 TAG=yourrepo/docsbot:tag
+
+Подготовка buildx (если ещё не настроен):
+
+    docker buildx create --use --name mybuilder
+    docker buildx inspect --bootstrap
+
+Dockerfile и сборка
+
+Dockerfile использует multi-stage сборку: сначала образ golang (builder) компилирует статический бинарь (CGO_ENABLED=0 по умолчанию), затем финальный образ — distroless static:nonroot. При необходимости для отладки можно заменить финальный этап на alpine.
+
+CI
+
+Добавлен пример GitHub Actions workflow (.github/workflows/ci.yml), который выполняет тесты и собирает multi-arch образ с помощью buildx (push в GitHub Container Registry). Настройте секреты и права доступа к реестру при необходимости.
+
+Примечания
+
+- Метрики реализованы с помощью github.com/prometheus/client_golang.
+- Если в будущем потребуется собирать дополнительные метрики или автоматически инкрементировать счётчики для каждого HTTP-запроса, можно добавить middleware, который будет обновлять internal/metrics.RequestsTotal.
+- Для внешних HTTPS-запросов убедитесь, что в образ добавлены CA certificates, если это требуется в runtime.
+
+Контакты
+
+Для вопросов по реализации и сборке — откройте issue в репозитории.
