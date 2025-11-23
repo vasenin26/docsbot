@@ -28,15 +28,9 @@ func main() {
 	defer cancel()
 
 	if token != "" {
-		bot, err := telegram.NewBot(token)
-		if err != nil {
-			log.Fatalf("failed to init telegram bot: %v", err)
+		if err := telegram.StartInBackground(ctx, token); err != nil {
+			log.Fatalf("failed to start telegram bot: %v", err)
 		}
-		go func() {
-			if err := bot.Start(ctx); err != nil {
-				log.Printf("telegram bot stopped with error: %v", err)
-			}
-		}()
 	}
 
 	// Handle OS signals for graceful shutdown
