@@ -19,6 +19,42 @@
 
     METRICS_PORT=8080 ./bin/docsbot
 
+Telegram
+
+Если задана переменная окружения TELEGRAM_BOT_TOKEN, при старте сервиса будет запущен Telegram бот в режиме long polling.
+
+Поведение бота:
+- Бот слушает сообщения в группах/супергруппах.
+- Обрабатываются только сообщения, адресованные боту (упоминание @username или entities типа mention/bot_command).
+- При получении адресованного сообщения бот отвечает в чат точно текстом "Ок".
+- Текст входящего сообщения также выводится в stdout в формате:
+
+    telegram: received message from chat <chatID>: <text>
+
+Переменные окружения:
+- TELEGRAM_BOT_TOKEN — токен Telegram бота. Если не задан, бот не запускается.
+- METRICS_PORT — порт для HTTP-сервера метрик (по умолчанию 9090).
+
+Пример запуска с ботом:
+
+    TELEGRAM_BOT_TOKEN=123:ABC ./bin/docsbot
+
+Тестирование
+
+Запуск unit-тестов:
+
+    make test
+
+Docker
+
+Сборка образа для архитектуры хоста:
+
+    make docker-build
+
+Запуск контейнера локально (с указанием токена):
+
+    TELEGRAM_BOT_TOKEN=123:ABC make docker-run
+
 Тестирование
 
 Запуск unit-тестов:
