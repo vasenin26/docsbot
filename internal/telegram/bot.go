@@ -24,7 +24,7 @@ type TelegramClient interface {
 // Bot инкапсулирует логику работы с Telegram API.
 type Bot struct {
 	client   TelegramClient
-t	username string
+	username string
 	logger   *log.Logger
 	mu       sync.Mutex
 }
@@ -170,4 +170,31 @@ func (b *Bot) isAddressedToBot(msg *tgbotapi.Message) bool {
 	}
 
 	return false
+}
+
+// Run создает бота и запускает его в blocking режиме (вызывает Start).
+// Если token пустой — ничего не делает и возвращает nil.
+func Run(ctx context.Context, token string) error {
+	if token == "" {
+		return nil
+	}
+	b, err := NewBot(token)
+	if err != nil {
+		return err
+	}
+	return b.Start(ctx)
+}
+
+// StartInBackground запускает Run в отдельной горутине и немедленно возвращает.
+// Любые ошибки в процессе старта/работы бота будут залогированы, но не возвращены.
+func StartInBackground(ctx context.Context, token string) error {
+	if token == "" {
+		return nil
+	}
+	go func() {
+		if err := Run(ctx, token); err != nil {
+			log.Printf("telegram bot stopped with error: %v", err)
+		}
+	}()
+	return nil
 }
